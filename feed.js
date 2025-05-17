@@ -1,7 +1,8 @@
 import puppeteer from 'puppeteer';
-import { getStocksFromCSV } from './stocklist.js';
+import { getStockandNameFromCSV } from './Stockparse.js';
+const stocks = await getStockandNameFromCSV();
 
-const stocks = await getStocksFromCSV();
+
 //const stocks=['20Microns','360ONE']
 import dotenv from 'dotenv'
 import axios from 'axios'
@@ -74,7 +75,7 @@ async function scrapeStockFeeds() {
    
     const allResults = [];
    
-    for (const stock of stocks) {
+    for (const { stockName, stock } of stocks) {
       try {
         console.log(`🔍 Searching for stock: ${stock}`);
         
@@ -222,6 +223,7 @@ async function scrapeStockFeeds() {
           for (const [index, item] of feedItems.entries()) {
             const wpData = { 
               stock: stock,
+              stockName:stockName,
               date: item.date, 
               source: item.source,
               content: item.content,
@@ -245,7 +247,7 @@ async function scrapeStockFeeds() {
           console.log(`No today's feed items found for ${stock}, nothing to store.`);
         }
         
-        allResults.push({ stock, feedItems });
+        allResults.push({ stock,stockName, feedItems });
         await delay(2000); // wait before next search
         
       } catch (error) {
@@ -273,6 +275,7 @@ async function storeInWordPress(data) {
     console.log('Sending to WordPress API...');
     const response = await axios.post(wpApiUrl, {
       stock: data.stock,
+      stockName:data.stockName,
       date: data.date,
       source: data.source,
       content: data.content

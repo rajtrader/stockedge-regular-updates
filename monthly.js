@@ -1,13 +1,13 @@
 import puppeteer from 'puppeteer';
 import dotenv from 'dotenv'
 import axios from 'axios'
-import { getStocksFromCSV } from './stocklist.js';
+import { getStockandNameFromCSV } from './Stockparse.js';
 
-const stocks = await getStocksFromCSV();
+const stocks = await getStockandNameFromCSV();
 
 dotenv.config();
 const wpApiUrl=process.env.WP_API_MONTHLY;
-//const stocks=['20MICRONS']
+
 const scrapeMonthly = async () => {
   const browser = await puppeteer.launch({
     headless: true,
@@ -41,7 +41,7 @@ const scrapeMonthly = async () => {
 
   await delay(5000);
 
-  for (const stock of stocks) {
+  for (const { stockName, stock } of stocks)  {
     let monthlyData = [];
     try {
       console.log(`Searching for stock: ${stock}`);
@@ -174,29 +174,34 @@ const scrapeMonthly = async () => {
         continue;
       }
       
-    
+      
       for (const monthData of monthlyData) {
         const wpData = { 
           stock: stock,
+          stockName:stockName,
           date: monthData.date,  
           deliveredQty: monthData.deliveredQty,
           tradedQty: monthData.tradedQty,
           vwap: monthData.vwap  
         };
         
-        const stored = await storeInWordPress(wpData);
-        if (stored) {
-          console.log(`Successfully stored "${stock}" data for ${monthData.date} in WordPress.`);
-        } else if(stored?.duplicate) {
-          console.log(`Skipped duplicate: "${stock}" data for ${monthData.date}`);
-        } else {
-          console.log(`Failed to store "${stock}" data for ${monthData.date} in WordPress.`);
+        try {
+          const stored = await storeInWordPress(wpData);
+          if (stored?.updated) {
+            console.log(`Updated "${stock}" data for ${monthData.date} in WordPress.`);
+          } else if (stored) {
+            console.log(`Successfully stored "${stock}" data for ${monthData.date} in WordPress.`);
+          } else {
+            console.log(`Failed to store "${stock}" data for ${monthData.date} in WordPress.`);
+          }
+        } catch (error) {
+          console.error(`API error for "${stock}" data on ${monthData.date}: ${error.message}`);
         }
         
-        await delay(1000); // Short delay between storing each month's data
+        await delay(2000); // Longer delay between storing each month's data to give WordPress time to process
       }
       
-      await delay(2000); // Wait before next search
+      await delay(3000); // Wait before next search
       
     } catch (error) {
       console.log(`Failed to extract data for ${stock}:`, error.message);
@@ -210,25 +215,27 @@ async function storeInWordPress(data) {
   try {
     const response = await axios.post(wpApiUrl, {
       stock: data.stock,
+      stockName:data.stockName,
       date: data.date,
       deliveredQty: data.deliveredQty,
       tradedQty: data.tradedQty,
       vwap: data.vwap
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 15000 // Increase timeout to 15 seconds
     });
 
-    console.log('Stored in WordPress:', response.data);
-    return true;
+    return response.data;
   } catch (error) {
-    console.error('WP API Error:', error.response?.data || error.message);
+    console.error('WP API Error:', error.response?.data?.message || error.message);
     
-    // Check if this is a duplicate entry error
-    if (error.response?.data?.message?.includes('already exists')) {
-      return { duplicate: true };
-    }
-    
-    return false;
+    // Return detailed error information
+    return {
+      error: true,
+      message: error.response?.data?.message || error.message
+    };
   }
 }
-
-  scrapeMonthly();
-
+scrapeMonthly();

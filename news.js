@@ -1,9 +1,9 @@
 import puppeteer from 'puppeteer';
-import { getStocksFromCSV } from './stocklist.js';
+import { getStockandNameFromCSV } from './Stockparse.js';
 import dotenv from 'dotenv'
 import axios from 'axios'
 //const stocks=['20MICRONS']
-const stocks = await getStocksFromCSV();
+const stocks = await getStockandNameFromCSV();
 dotenv.config();
 const wpApiUrl = process.env.WP_API_NEWS;
 
@@ -56,7 +56,7 @@ async function scrapeStockNews() {
     
     console.log(`Looking for news from today: ${todayFormatted}`);
 
-    for (const stock of stocks) {
+    for (const { stockName, stock } of stocks) {
       try {
         console.log(`🔍 Searching for stock: ${stock}`);
         
@@ -167,6 +167,7 @@ async function scrapeStockNews() {
             
             const wpData = { 
               stock: stock,
+              stockName:stockName,
               date: newsItem.date,
               content: newsItem.content
             };
@@ -186,7 +187,7 @@ async function scrapeStockNews() {
           console.log(`No today's news items found for "${stock}", skipping database storage.`);
         }
         
-        allResults.push({ stock, newsItems });
+        allResults.push({ stock,stockName, newsItems });
         await delay(2000); // wait before next search
         
       } catch (error) { 
@@ -215,6 +216,7 @@ async function storeInWordPress(data) {
   try {
     const response = await axios.post(wpApiUrl, {
       stock: data.stock,
+      stockName:data.stockName,
       date: data.date,
       content: data.content
     });
