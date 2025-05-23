@@ -10,7 +10,7 @@ import dotenv from 'dotenv'
 import axios from 'axios'
 
 dotenv.config();
-const wpApiUrl = process.env.WP_API_FEED;
+const wpApiUrl = 'https://profitbooking.in/wp-json/scraper/v1/stockedge-feeddata';
 
 async function scrapeStockFeeds() {
   console.log('Starting browser...');

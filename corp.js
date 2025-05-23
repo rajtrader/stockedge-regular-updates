@@ -6,7 +6,7 @@ const stocks = await getStocksFromCSV();
 //const stocks=['20Microns','360ONE']
 
 dotenv.config();
-const wpApiUrl = process.env.WP_API_CORP;
+const wpApiUrl = 'https://profitbooking.in/wp-json/scraper/v1/stockedge-corp_Action';
 
 async function scrapeDividendInfo() {
   const browser = await puppeteer.launch({

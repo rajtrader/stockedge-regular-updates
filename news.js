@@ -6,7 +6,7 @@ import axios from 'axios'
 //const stocks=['20MICRONS']
 const stocks = await getStockandNameFromCSV();
 dotenv.config();
-const wpApiUrl = process.env.WP_API_NEWS;
+const wpApiUrl = 'https://profitbooking.in/wp-json/scraper/v1/stockedge-news-data';
 
 async function scrapeStockNews() {
   console.log('Starting browser...');

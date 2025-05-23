@@ -8,7 +8,7 @@ import { getStockandNameFromCSV } from './Stockparse.js';
 const stocks = await getStockandNameFromCSV();
 
 dotenv.config();
-const wpApiUrl=process.env.WP_API_MONTHLY;
+const wpApiUrl='https://profitbooking.in/wp-json/scraper/v1/stock-monthly';
 
 const scrapeMonthly = async () => {
   const browser = await puppeteer.launch({
