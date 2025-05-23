@@ -1,6 +1,8 @@
 name: Run Stock News Scraper
 
 on:
+  schedule:
+  - cron: "0 9 * * *"
   workflow_dispatch:
 
 jobs:
@@ -42,10 +44,5 @@ jobs:
         run: npm install
 
       - name: Run scraper
-        run: |
-          node corp.js
-          node daily.js
-          node feed.js
-          node monthly.js
-          node news.js
+        run: node index.js
          

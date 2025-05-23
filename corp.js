@@ -14,12 +14,15 @@ async function scrapeDividendInfo() {
     defaultViewport: null,
     timeout: 0,
     args: [
-      '--no-sandbox',
+         '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
-      '--single-process'
-    ]
+      '--single-process',
+      '--disable-extensions',
+      '--disable-blink-features=AutomationControlled', // Important
+    '--window-size=1920,1080'
+    ],ignoreHTTPSErrors: true,
   });
   
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -66,7 +69,7 @@ async function scrapeDividendInfo() {
       await delay(3000);
       
       // Click on the search bar
-      await page.waitForSelector('input.searchbar-input', { timeout: 30000 });
+      await page.waitForSelector('input.searchbar-input', { timeout: 60000 });
       await page.click('input.searchbar-input');
       await delay(1000);
       
@@ -83,7 +86,7 @@ async function scrapeDividendInfo() {
       
       // Waiting longer for search results to appear and stabilize
       await delay(3000);
-      await page.waitForSelector('ion-item[button]', { timeout: 30000 });
+      await page.waitForSelector('ion-item[button]', { timeout: 60000 });
       await delay(2000);
       
       // Click on the first stock result
@@ -110,7 +113,7 @@ async function scrapeDividendInfo() {
       console.log(`Clicked on stock: ${clickedResult}`);
 
       // Wait for navigation to complete - longer timeout
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 });
       await delay(8000);
       
       // Get the current URL
@@ -121,13 +124,13 @@ async function scrapeDividendInfo() {
       if (!currentUrl.includes('section=corp-actions')) {
         const corpActionsUrl = `${currentUrl.split('?')[0]}?section=corp-actions`;
         console.log(`Navigating to corporate actions: ${corpActionsUrl}`);
-        await page.goto(corpActionsUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+        await page.goto(corpActionsUrl, { waitUntil: 'networkidle2', timeout: 60000 });
         await delay(5000);
       }
 
       // Wait for dividend data to load
       try {
-        await page.waitForSelector('ion-item[se-item]', { timeout: 20000 });
+        await page.waitForSelector('ion-item[se-item]', { timeout: 60000 });
       } catch (e) {
         console.log("Could not find dividend information, trying to continue anyway");
       }

@@ -1,4 +1,6 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+puppeteer.use(StealthPlugin());
 import dotenv from 'dotenv'
 import axios from 'axios'
 import { getStockandNameFromCSV } from './Stockparse.js';
@@ -14,12 +16,15 @@ const scrapeMonthly = async () => {
     defaultViewport: null,
     timeout: 0, 
     args: [
-      '--no-sandbox',
+   '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
-      '--single-process'
-    ]
+      '--single-process',
+      '--disable-extensions',
+      '--disable-blink-features=AutomationControlled', // Important
+    '--window-size=1920,1080'
+    ],ignoreHTTPSErrors: true,
   });
   
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -50,7 +55,7 @@ const scrapeMonthly = async () => {
       await delay(3000);
       
       // Click on the search bar
-      await page.waitForSelector('input.searchbar-input', { timeout: 30000 });
+      await page.waitForSelector('input.searchbar-input', { timeout: 60000 });
       await page.click('input.searchbar-input');
       await delay(1000);
       
@@ -67,7 +72,7 @@ const scrapeMonthly = async () => {
       
       // Wait longer for search results to appear and stabilize
       await delay(3000);
-      await page.waitForSelector('ion-item[button]', { timeout: 30000 });
+      await page.waitForSelector('ion-item[button]', { timeout: 60000 });
       await delay(2000);
       
       // Click on the first stock result
@@ -94,7 +99,7 @@ const scrapeMonthly = async () => {
       console.log(`Clicked on stock: ${clickedResult}`);
 
       // Wait for navigation to complete - longer timeout
-      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 });
+      await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 });
       await delay(8000);
       
       // Get the current URL
@@ -105,12 +110,12 @@ const scrapeMonthly = async () => {
       if (!currentUrl.includes('section=deliveries')) {
         const deliveryUrl = `${currentUrl.split('?')[0]}?section=deliveries&exchange-name=Both&time-period=Monthly`;
         console.log(`Adding deliveries section: ${deliveryUrl}`);
-        await page.goto(deliveryUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+        await page.goto(deliveryUrl, { waitUntil: 'networkidle2', timeout: 60000 });
         await delay(4000);
       }
 
       try {
-        await page.waitForSelector('g.deld3bar > rect', { timeout: 20000 });
+        await page.waitForSelector('g.deld3bar > rect', { timeout: 60000 });
       } catch (e) {
         console.log("Could not find delivery bars, trying to continue anyway");
       }
